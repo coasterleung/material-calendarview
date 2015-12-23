@@ -1200,7 +1200,6 @@ public class MaterialCalendarView extends ViewGroup {
                     CalendarDay start = CalendarDay.from(startCal);
                     while (start != null && (start.isBefore(date) || start.equals(date))) {
                         adapter.setDateSelected(start, true);
-                        dispatchOnDateSelected(start, true);
                         startCal.add(Calendar.DAY_OF_YEAR, 1);
                         start = CalendarDay.from(startCal);
                     }
