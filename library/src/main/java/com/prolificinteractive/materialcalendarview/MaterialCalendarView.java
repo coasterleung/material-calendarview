@@ -72,7 +72,7 @@ public class MaterialCalendarView extends ViewGroup {
      * @see #getSelectionMode()
      */
     @Retention(RetentionPolicy.RUNTIME)
-    @IntDef({SELECTION_MODE_NONE, SELECTION_MODE_SINGLE, SELECTION_MODE_MULTIPLE})
+    @IntDef({SELECTION_MODE_NONE, SELECTION_MODE_SINGLE, SELECTION_MODE_MULTIPLE, SELECTION_MODE_RANGE})
     public @interface SelectionMode {
     }
 
@@ -93,6 +93,11 @@ public class MaterialCalendarView extends ViewGroup {
      * Selection mode which allows more than one selected date at one time.
      */
     public static final int SELECTION_MODE_MULTIPLE = 2;
+
+    /**
+     * Selection mode which applies for range date selection
+     */
+    public static final int SELECTION_MODE_RANGE = 3;
 
     /**
      * {@linkplain IntDef} annotation for showOtherDates.
@@ -199,6 +204,7 @@ public class MaterialCalendarView extends ViewGroup {
 
     private OnDateSelectedListener listener;
     private OnMonthChangedListener monthListener;
+    private OnRangeDaysSelectedListener rangeListener;
 
     private int accentColor = 0;
     private int arrowColor = Color.BLACK;
@@ -384,6 +390,7 @@ public class MaterialCalendarView extends ViewGroup {
      * @see #SELECTION_MODE_NONE
      * @see #SELECTION_MODE_SINGLE
      * @see #SELECTION_MODE_MULTIPLE
+     * @see #SELECTION_MODE_RANGE
      */
     public void setSelectionMode(final @SelectionMode int mode) {
         final @SelectionMode int oldMode = this.selectionMode;
@@ -412,6 +419,10 @@ public class MaterialCalendarView extends ViewGroup {
                 }
             }
             break;
+            case SELECTION_MODE_RANGE: {
+                this.selectionMode = SELECTION_MODE_RANGE;
+                clearSelection();
+            }
         }
 
         adapter.setSelectionEnabled(selectionMode != SELECTION_MODE_NONE);
@@ -1135,6 +1146,10 @@ public class MaterialCalendarView extends ViewGroup {
         this.listener = listener;
     }
 
+    public void setOnRangeDaysSelectedListener(OnRangeDaysSelectedListener listener) {
+        this.rangeListener = listener;
+    }
+
     /**
      * Sets the listener to be notified upon month changes.
      *
@@ -1177,6 +1192,28 @@ public class MaterialCalendarView extends ViewGroup {
      */
     protected void onDateClicked(@NonNull CalendarDay date, boolean nowSelected) {
         switch (selectionMode) {
+            case SELECTION_MODE_RANGE: {
+                if (adapter.getSelectedDates().size() == 1 && adapter.getSelectedDates().get(0).isBefore(date)) {
+                    Calendar startCal = Calendar.getInstance();
+                    startCal.setTime(adapter.getSelectedDates().get(0).getCalendar().getTime());
+                    startCal.add(Calendar.DAY_OF_YEAR, 1);
+                    CalendarDay start = CalendarDay.from(startCal);
+                    while (start != null && (start.isBefore(date) || start.equals(date))) {
+                        adapter.setDateSelected(start, true);
+                        dispatchOnDateSelected(start, true);
+                        startCal.add(Calendar.DAY_OF_YEAR, 1);
+                        start = CalendarDay.from(startCal);
+                    }
+                    if (rangeListener != null) {
+                        rangeListener.onRangeDateSelected(this, adapter.getSelectedDates().get(0), adapter.getSelectedDates().get(adapter.getSelectedDates().size() - 1));
+                    }
+                } else {
+                    adapter.clearSelections();
+                    adapter.setDateSelected(date, true);
+                    dispatchOnDateSelected(date, true);
+                }
+                break;
+            }
             case SELECTION_MODE_MULTIPLE: {
                 adapter.setDateSelected(date, nowSelected);
                 dispatchOnDateSelected(date, nowSelected);
