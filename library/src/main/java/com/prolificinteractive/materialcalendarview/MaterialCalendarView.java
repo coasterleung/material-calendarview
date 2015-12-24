@@ -346,6 +346,7 @@ public class MaterialCalendarView extends ViewGroup {
             monthView.setShowOtherDates(getShowOtherDates());
             addView(monthView, new LayoutParams(MonthView.DEFAULT_MONTH_TILE_HEIGHT));
         }
+        pager.setRotation(90f);
     }
 
     private void setupChildren() {

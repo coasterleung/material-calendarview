@@ -138,6 +138,7 @@ class MonthPagerAdapter extends PagerAdapter {
         currentViews.add(monthView);
 
         monthView.setDayViewDecorators(decoratorResults);
+        monthView.setRotation(-90f);
 
         return monthView;
     }
